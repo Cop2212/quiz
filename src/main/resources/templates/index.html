@@ -2,22 +2,14 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Quiz App</title>
-    <link rel="stylesheet" href="/css/styles.css"> <!-- Gắn file CSS nếu có -->
+    <title>Trang chính</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
-<header>
-    <h1>Quiz Application</h1>
-</header>
-
-<main>
-    <h2 th:text="${message}"></h2>
-    <p>Trang web này giúp bạn tạo và làm các bài quiz trực tuyến.</p>
-    <a href="/quiz">Bắt đầu Quiz</a>
-</main>
-
-<footer>
-    <p>&copy; 2024 Quiz Application</p>
-</footer>
+<h1>Chào mừng đến với Quiz Web!</h1>
+<div>
+    <a th:href="@{/login}">Đăng nhập</a> |
+    <a th:href="@{/register}">Đăng ký</a>
+</div>
 </body>
 </html>

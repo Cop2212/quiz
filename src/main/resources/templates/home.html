@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Trang chủ - Quiz Web</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<h1>Chào mừng đến với Quiz Web</h1>
+
+<h2>Danh sách bài thi:</h2>
+<div>
+    <ul>
+        <li th:each="quiz : ${quizzes}">
+            <h3 th:text="${quiz.title}">Quiz Title</h3>
+            <p th:text="${quiz.description}">Quiz Description</p>
+            <a th:href="@{/quiz/{id}(id=${quiz.id})}">Bắt đầu Quiz</a>
+        </li>
+    </ul>
+</div>
+</body>
+</html>

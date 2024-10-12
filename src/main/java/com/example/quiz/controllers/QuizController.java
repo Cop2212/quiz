@@ -6,21 +6,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
-public class HomeController {
+public class QuizController {
 
     @Autowired
     private QuizService quizService;
 
-    @GetMapping("/home")
-    public String showHomePage(Model model) {
-        // Lấy danh sách tất cả các quiz
-        List<Quiz> quizzes = quizService.getAllQuizzes();
-        model.addAttribute("quizzes", quizzes);
-
-        return "home"; // Trả về view "home.html"
+    @GetMapping("/quiz/{id}")
+    public String showQuizDetails(@PathVariable("id") Long id, Model model) {
+        Quiz quiz = quizService.getQuizById(id);
+        model.addAttribute("quiz", quiz);
+        return "quiz_details";  // Trả về trang chi tiết quiz
     }
 }

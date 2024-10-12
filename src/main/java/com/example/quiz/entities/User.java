@@ -2,51 +2,19 @@ package com.example.quiz.entities;
 
 import jakarta.persistence.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
-@Table(name = "users")
+@Table(name = "user")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-increment ID
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String email;
-    private String phone;
+
+    private String username;
     private String password;
-    private boolean active;
-    @OneToMany(mappedBy = "user")
-    private List<CustomerOrder> customerOrders = new ArrayList<>();
+    private String email;
+    private String role;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "profile_id", referencedColumnName = "id")
-    private Profile profile;
-    public User() {
-
-
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", email='" + email + '\'' +
-                ", phone='" + phone + '\'' +
-                ", password='" + password + '\'' +
-                ", active=" + active +
-                ", customerOrders=" + customerOrders +
-                ", profile=" + profile +
-                '}';
-    }
-
-    public User(Long id, String email, String phone, String password, boolean active) {
-        this.id = id;
-        this.email = email;
-        this.phone = phone;
-        this.password = password;
-        this.active = active;
-    }
-
+    // Getters và Setters
     public Long getId() {
         return id;
     }
@@ -55,20 +23,12 @@ public class User {
         this.id = id;
     }
 
-    public String getEmail() {
-        return email;
+    public String getUsername() {
+        return username;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPassword() {
@@ -79,11 +39,19 @@ public class User {
         this.password = password;
     }
 
-    public boolean isActive() {
-        return active;
+    public String getEmail() {
+        return email;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

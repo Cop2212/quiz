@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết Quiz</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<h1 th:text="${quiz.title}">Quiz Title</h1>
+<p th:text="${quiz.description}">Quiz Description</p>
+
+<a th:href="@{/start-quiz/{id}(id=${quiz.id})}">Bắt đầu Quiz</a>
+</body>
+</html>
