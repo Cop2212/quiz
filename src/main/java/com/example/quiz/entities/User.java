@@ -13,6 +13,7 @@ public class User {
     private String password;
     private String email;
     private String role;
+    private String resetToken;
 
     // Getters và Setters
     public Long getId() {
@@ -53,5 +54,13 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public void setResetToken(String token) {
+        this.resetToken = resetToken;
     }
 }
