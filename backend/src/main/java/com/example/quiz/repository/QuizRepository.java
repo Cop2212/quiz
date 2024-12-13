@@ -10,5 +10,6 @@ import java.util.List;
 public interface QuizRepository extends JpaRepository<Quiz, Long> {
     List<Quiz> findByUserId(Long userId);
     List<Quiz> findByCodeQuiz(String codeQuiz);
+
 }
 

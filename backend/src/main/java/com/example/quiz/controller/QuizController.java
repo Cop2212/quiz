@@ -2,16 +2,20 @@ package com.example.quiz.controller;
 
 import com.example.quiz.model.Question;
 import com.example.quiz.model.Quiz;
+import com.example.quiz.model.QuizResult;
 import com.example.quiz.model.User;
 import com.example.quiz.repository.QuestionRepository;
 import com.example.quiz.repository.QuizRepository;
 import com.example.quiz.repository.UserRepository;
+import com.example.quiz.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.quiz.service.QuizService;
 
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +24,7 @@ import java.util.List;
 public class QuizController {
 
     @Autowired
-    private QuizService quizService;
+    private final QuizService quizService;
 
     @Autowired
     private QuizRepository quizRepository;
@@ -31,49 +35,167 @@ public class QuizController {
     @Autowired
     private UserRepository userRepository;
 
-    @PostMapping("/updatePrivacy/{quizId}")
-    public ResponseEntity<?> updateQuizPrivacy(@PathVariable Long quizId, @RequestParam boolean isPublic) {
+    @Autowired
+    private QuizResultRepository quizResultRepository;
+
+    public QuizController(QuizService quizService, QuizRepository quizRepository,
+                          QuestionRepository questionRepository, UserRepository userRepository) {
+        this.quizService = quizService;
+        this.quizRepository = quizRepository;
+        this.questionRepository = questionRepository;
+        this.userRepository = userRepository;
+    }
+
+    // Phương thức nộp bài
+    @PostMapping("/api/quiz/submit")
+    public ResponseEntity<String> submitQuiz(@RequestBody QuizSubmissionDTO submissionDTO) {
         try {
-            if (quizId == null || quizId <= 0) {
-                return ResponseEntity.badRequest().body("Invalid quizId");
+            Long quizId = submissionDTO.getQuizId();
+            Long userId = submissionDTO.getUserId();
+            List<QuizSubmissionDTO.UserAnswerDTO> userAnswers = submissionDTO.getUserAnswers();
+
+            // Lấy quiz từ ID
+            Quiz quiz = quizRepository.findById(quizId)
+                    .orElseThrow(() -> new RuntimeException("Quiz không tồn tại"));
+
+            // Kiểm tra người dùng có quyền nộp bài không
+            if (!quiz.getUser().getId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Người dùng không có quyền nộp bài cho quiz này.");
             }
-            Quiz updatedQuiz = quizService.updatePrivacy(quizId, isPublic);
-            return ResponseEntity.ok(updatedQuiz);
+
+            // Tính số câu đúng và điểm
+            int correctAnswers = 0;
+            int totalQuestions = quiz.getQuestions().size();
+
+            for (QuizSubmissionDTO.UserAnswerDTO userAnswer : userAnswers) {
+                // Lấy câu hỏi từ quiz
+                Question question = quiz.getQuestions().stream()
+                        .filter(q -> q.getId().equals(userAnswer.getQuestionId()))
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("Câu hỏi không tồn tại"));
+
+                // So sánh câu trả lời của người dùng với câu trả lời đúng
+                if (question.getCorrectAnswerIndex() == userAnswer.getSelectedAnswerIndex()) {
+                    correctAnswers++;
+                }
+            }
+
+            // Tính điểm
+            double score = correctAnswers * (10.0 / totalQuestions);
+
+            // Lưu kết quả vào cơ sở dữ liệu
+            QuizResult result = new QuizResult();
+            result.setQuiz(quiz);
+            result.setUserId(userId);
+            result.setScore(score);
+            result.setTotalQuestions(totalQuestions);
+            quizResultRepository.save(result);
+
+            return ResponseEntity.ok("Nộp bài thành công. Điểm của bạn là: " + score);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating quiz privacy");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Có lỗi xảy ra khi nộp bài: " + e.getMessage());
+        }}
+
+    @GetMapping("/{quizId}")
+    public ResponseEntity<QuizDTO> getQuizById(@PathVariable Long quizId, @RequestParam Long userId) {
+        // Tìm quiz theo ID
+        Optional<Quiz> optionalQuiz = quizService.findById(quizId);
+        if (!optionalQuiz.isPresent()) {
+            // Trả về lỗi nếu không tìm thấy quiz
+            return ResponseEntity.notFound().build();
+        }
+// Lấy quiz từ Optional
+        Quiz quiz = optionalQuiz.get();
+
+        // Chuyển quiz sang QuizDTO
+        QuizDTO quizDTO = new QuizDTO();
+        quizDTO.setQuizId(quiz.getId());
+        quizDTO.setQuizName(quiz.getQuizName());
+        quizDTO.setCodeQuiz(quiz.getCodeQuiz());
+        quizDTO.setTimeLimit(quiz.getTimeLimit());
+        quizDTO.setUserId(quiz.getUser().getId());
+
+        // Thêm câu hỏi vào quizDTO
+        List<QuestionDTO> questionDTOs = quiz.getQuestions().stream().map(question -> {
+            QuestionDTO questionDTO = new QuestionDTO();
+            questionDTO.setQuestionText(question.getQuestionText());
+            questionDTO.setOptions(List.of(question.getOption1(), question.getOption2(), question.getOption3(), question.getOption4()));
+            questionDTO.setCorrectAnswerIndex(question.getCorrectAnswerIndex());
+            return questionDTO;
+        }).collect(Collectors.toList());
+
+        quizDTO.setQuestions(questionDTOs);
+
+        return ResponseEntity.ok(quizDTO);
+    }
+
+    @PutMapping("/updatePrivacy/{quizId}")
+    public ResponseEntity<String> updateQuizPrivacy(
+            @PathVariable Long quizId,
+            @RequestParam boolean isPublic) {
+        if (quizId == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Quiz ID không được để trống.");
+        }
+        try {
+            quizService.updatePrivacy(quizId, isPublic);
+            return ResponseEntity.ok("Cập nhật trạng thái quyền riêng tư thành công.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi khi cập nhật trạng thái quyền riêng tư.");
         }
     }
 
-
     @GetMapping("/code/{code}")
-    public List<QuizDTO> getQuizByCode(@PathVariable String code) {
-        // Lấy tất cả các quiz theo mã code
-        List<Quiz> quizzes = quizService.findByCodeQuiz(code);
+    public ResponseEntity<?> getQuizByCodeAndPrivacy(
+            @PathVariable String code,
+            @RequestParam Long userId // ID của người dùng hiện tại
+    ) {
+        try {
+            // Lấy danh sách quiz theo code
+            List<Quiz> quizzes = quizService.findByCodeQuiz(code);
 
-        // Chuyển đổi các quiz sang QuizDTO và trả về
-        List<QuizDTO> quizDTOs = new ArrayList<>();
-        for (Quiz quiz : quizzes) {
-            QuizDTO quizDTO = new QuizDTO();
-            quizDTO.setQuizId(quiz.getId());
-            quizDTO.setQuizName(quiz.getQuizName());
-            quizDTO.setCodeQuiz(quiz.getCodeQuiz());
-            quizDTO.setTimeLimit(quiz.getTimeLimit());
-            quizDTO.setUserId(quiz.getUser().getId());
+            // Bộ lọc quiz dựa trên quyền truy cập
+            List<QuizDTO> quizDTOs = quizzes.stream()
+                    .filter(quiz ->
+                            // Hiển thị tất cả quiz của người dùng hiện tại
+                            quiz.getUser().getId().equals(userId) ||
+                                    // Hoặc hiển thị quiz public của người dùng khác
+                                    !quiz.isPrivate()
+                    )
+                    .map(quiz -> {
+                        // Chuyển Quiz sang QuizDTO
+                        QuizDTO quizDTO = new QuizDTO();
+                        quizDTO.setQuizId(quiz.getId());
+                        quizDTO.setQuizName(quiz.getQuizName());
+                        quizDTO.setCodeQuiz(quiz.getCodeQuiz());
+                        quizDTO.setTimeLimit(quiz.getTimeLimit());
+                        quizDTO.setUserId(quiz.getUser().getId());
 
-            // Thêm danh sách câu hỏi vào quizDTO
-            List<QuestionDTO> questionDTOs = new ArrayList<>();
-            for (Question question : quiz.getQuestions()) {
-                QuestionDTO questionDTO = new QuestionDTO();
-                questionDTO.setQuestionText(question.getQuestionText());
-                questionDTO.setOptions(List.of(question.getOption1(), question.getOption2(), question.getOption3(), question.getOption4()));
-                questionDTO.setCorrectAnswerIndex(question.getCorrectAnswerIndex());
-                questionDTOs.add(questionDTO);
-            }
-            quizDTO.setQuestions(questionDTOs);
-            quizDTOs.add(quizDTO);
+                        // Chuyển câu hỏi sang DTO
+                        List<QuestionDTO> questionDTOs = quiz.getQuestions().stream().map(question -> {
+                            QuestionDTO questionDTO = new QuestionDTO();
+                            questionDTO.setQuestionText(question.getQuestionText());
+                            questionDTO.setOptions(List.of(
+                                    question.getOption1(),
+                                    question.getOption2(),
+                                    question.getOption3(),
+                                    question.getOption4()
+                            ));
+                            questionDTO.setCorrectAnswerIndex(question.getCorrectAnswerIndex());
+                            return questionDTO;
+                        }).collect(Collectors.toList());
+
+                        quizDTO.setQuestions(questionDTOs);
+                        return quizDTO;
+                    })
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(quizDTOs);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving quizzes: " + e.getMessage());
         }
-
-        return quizDTOs;
     }
 
 

@@ -19,6 +19,7 @@ public class Quiz {
     private String codeQuiz;
     private int timeLimit;
 
+    @Column(name = "is_private")
     private boolean isPrivate = true;
 
     @ManyToOne
@@ -34,6 +35,6 @@ public class Quiz {
     }
 
     public void setPublic(boolean isPublic) {
-        this.isPrivate = !isPublic;  // Nếu public thì đổi trạng thái thành false
+        this.isPrivate = isPublic;  // Nếu public thì đổi trạng thái thành false
     }
 }
