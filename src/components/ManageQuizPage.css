@@ -1,0 +1,180 @@
+/* Danh sách quiz */
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  padding: 12px;
+  background-color: #fff;
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.3s ease-in-out;
+}
+
+li:hover {
+  background-color: #f0f0f0;
+}
+
+li button {
+  padding: 8px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+li button:hover {
+  background-color: #0056b3;
+}
+
+label {
+  font-size: 14px;
+  color: #666;
+  margin-right: 10px;
+}
+
+input[type="checkbox"] {
+  margin: 0;
+  transform: scale(1.2); /* Tăng kích thước checkbox */
+}
+
+button {
+  margin-left: 10px;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Màu nền mờ */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Đảm bảo modal nằm trên các phần tử khác */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease-in-out; /* Thêm hiệu ứng mờ khi mở và đóng modal */
+}
+
+.modal.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-100px);
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Hiệu ứng chuyển động cho modal */
+@keyframes slideIn {
+  from {
+    transform: translateY(-100px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.modal h3 {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.modal label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: #555;
+}
+
+.modal input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.modal button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.modal button:hover {
+  background-color: #45a049;
+}
+
+.modal button + button {
+  background-color: #f44336;
+}
+
+.modal button + button:hover {
+  background-color: #da190b;
+}
+
+button {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+button:hover {
+  background-color: #007bff;
+  color: white;
+  transform: scale(1.05); /* Hiệu ứng phóng to nút khi hover */
+}
+
+button:active {
+  transform: scale(1); /* Khôi phục kích thước nút khi nhấn */
+}
+
+/* Thông báo */
+.toast {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background-color: #28a745;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 16px;
+  display: none;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.toast.show {
+  display: block;
+  opacity: 1;
+}
+
+.toast.error {
+  background-color: #dc3545;
+}
+
+
+

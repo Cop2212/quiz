@@ -1,0 +1,163 @@
+/* CreateQuizPage.css */
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Roboto', sans-serif;
+  background-color: #f4f7fc;  /* Thêm màu nền nhẹ */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  text-align: center;
+  color: #2c3e50;
+  font-size: 2rem;
+  margin-bottom: 30px;
+  font-weight: 600;
+}
+
+form {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+div {
+  margin-bottom: 20px;
+}
+
+label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8px;
+  color: #34495e;
+}
+
+input[type="text"],
+input[type="number"],
+select,
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  border: 1px solid #bdc3c7;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #34495e;
+  background-color: #ecf0f1;  /* Nền nhẹ cho các trường nhập */
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus,
+button:focus {
+  border-color: #3498db;
+  outline: none;
+  background-color: #eaf2f8;
+}
+
+button {
+  background-color: #3498db;
+  color: white;
+  cursor: pointer;
+  border: none;
+  margin-top: 10px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  padding: 12px;
+}
+
+button:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);  /* Thêm hiệu ứng di chuyển khi hover */
+}
+
+h3 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.question-container {
+  margin-bottom: 25px;
+  padding: 20px;
+  background-color: #ecf0f1;
+  border-radius: 8px;
+  border: 1px solid #bdc3c7;
+}
+
+.question-container h4 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.question-container input[type="text"] {
+  width: calc(100% - 16px);  /* To make space for padding */
+  margin-bottom: 12px;
+}
+
+.option-container {
+  margin-bottom: 15px;
+}
+
+button[type="button"] {
+  background-color: #e74c3c;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  margin-top: 15px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+button[type="button"]:hover {
+  background-color: #c0392b;
+}
+
+.upload-container {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.upload-container input {
+  padding: 10px;
+  background-color: #ecf0f1;
+  border: 1px solid #bdc3c7;
+  border-radius: 6px;
+}
+
+button[type="submit"] {
+  background-color: #27ae60;
+  margin-top: 30px;
+}
+
+button[type="submit"]:hover {
+  background-color: #2ecc71;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+
+  h2 {
+    font-size: 1.8rem;
+  }
+
+  form {
+    padding: 20px;
+  }
+
+  label, input, select, button {
+    font-size: 1rem;
+  }
+
+  button {
+    padding: 10px;
+  }
+}

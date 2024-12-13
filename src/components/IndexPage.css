@@ -1,0 +1,108 @@
+/* Background Styling */
+.background {
+  background: linear-gradient(to right, #6a11cb, #2575fc);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Roboto', sans-serif;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* Animation Effect for Background */
+.background:before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.2), rgba(0,0,0,0.8));
+  animation: animate 8s linear infinite;
+  z-index: -1;
+}
+
+@keyframes animate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Container Styling */
+.container {
+  text-align: center;
+  padding: 20px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+}
+
+/* Title Styling */
+h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  text-shadow: 2px 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Subtitle Styling */
+p {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  opacity: 0.8;
+}
+
+/* Button Group */
+.button-group {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+/* Buttons Styling */
+.button {
+  padding: 15px 40px;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 25px;
+  transition: all 0.3s ease;
+}
+
+.button.login {
+  background: #4CAF50;
+  color: white;
+}
+
+.button.signup {
+  background: #2196F3;
+  color: white;
+}
+
+.button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.button:active {
+  transform: scale(0.95);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  p {
+    font-size: 1rem;
+  }
+
+  .button {
+    font-size: 0.9rem;
+    padding: 10px 30px;
+  }
+}
