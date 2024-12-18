@@ -23,6 +23,5 @@ public class Question {
     @ManyToOne
     @JoinColumn(name = "quiz_id", nullable = false)
     private Quiz quiz;
-
     // getters and setters
 }

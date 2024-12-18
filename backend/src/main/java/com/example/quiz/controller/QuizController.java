@@ -47,7 +47,7 @@ public class QuizController {
     }
 
     // Phương thức nộp bài
-    @PostMapping("/api/quiz/submit")
+    @PostMapping("/submit")
     public ResponseEntity<String> submitQuiz(@RequestBody QuizSubmissionDTO submissionDTO) {
         try {
             Long quizId = submissionDTO.getQuizId();
@@ -58,14 +58,14 @@ public class QuizController {
             Quiz quiz = quizRepository.findById(quizId)
                     .orElseThrow(() -> new RuntimeException("Quiz không tồn tại"));
 
-            // Kiểm tra người dùng có quyền nộp bài không
-            if (!quiz.getUser().getId().equals(userId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Người dùng không có quyền nộp bài cho quiz này.");
-            }
-
             // Tính số câu đúng và điểm
             int correctAnswers = 0;
             int totalQuestions = quiz.getQuestions().size();
+
+            // Kiểm tra nếu quiz không có câu hỏi
+            if (totalQuestions == 0) {
+                throw new RuntimeException("Quiz không có câu hỏi");
+            }
 
             for (QuizSubmissionDTO.UserAnswerDTO userAnswer : userAnswers) {
                 // Lấy câu hỏi từ quiz
@@ -73,6 +73,12 @@ public class QuizController {
                         .filter(q -> q.getId().equals(userAnswer.getQuestionId()))
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("Câu hỏi không tồn tại"));
+
+                // Kiểm tra nếu người dùng chưa chọn đáp án (selectedAnswerIndex == -1)
+                if (userAnswer.getSelectedAnswerIndex() == -1) {
+                    // Tính điểm 0 cho câu hỏi chưa chọn đáp án hoặc bỏ qua
+                    continue; // Hoặc bạn có thể tính là sai
+                }
 
                 // So sánh câu trả lời của người dùng với câu trả lời đúng
                 if (question.getCorrectAnswerIndex() == userAnswer.getSelectedAnswerIndex()) {
@@ -91,10 +97,12 @@ public class QuizController {
             result.setTotalQuestions(totalQuestions);
             quizResultRepository.save(result);
 
-            return ResponseEntity.ok("Nộp bài thành công. Điểm của bạn là: " + score);
+            return ResponseEntity.ok("Nộp bài thành công. Điểm của bạn là: " + score + ". Số câu đúng: " + correctAnswers + "/" + totalQuestions);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Có lỗi xảy ra khi nộp bài: " + e.getMessage());
-        }}
+        }
+    }
+
 
     @GetMapping("/{quizId}")
     public ResponseEntity<QuizDTO> getQuizById(@PathVariable Long quizId, @RequestParam Long userId) {
@@ -118,6 +126,7 @@ public class QuizController {
         // Thêm câu hỏi vào quizDTO
         List<QuestionDTO> questionDTOs = quiz.getQuestions().stream().map(question -> {
             QuestionDTO questionDTO = new QuestionDTO();
+            questionDTO.setId(question.getId());  // Thêm dòng này để lấy id
             questionDTO.setQuestionText(question.getQuestionText());
             questionDTO.setOptions(List.of(question.getOption1(), question.getOption2(), question.getOption3(), question.getOption4()));
             questionDTO.setCorrectAnswerIndex(question.getCorrectAnswerIndex());
@@ -324,9 +333,19 @@ public class QuizController {
 
     // DTO cho Question
     public static class QuestionDTO {
+        private Long id;  // Thêm trường id
         private String questionText;
         private List<String> options;
         private int correctAnswerIndex;
+
+        // Getters and Setters
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
 
         public String getQuestionText() {
             return questionText;

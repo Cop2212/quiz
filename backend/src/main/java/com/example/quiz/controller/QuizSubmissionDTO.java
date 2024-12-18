@@ -3,6 +3,7 @@ package com.example.quiz.controller;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class QuizSubmissionDTO {
@@ -11,7 +12,13 @@ public class QuizSubmissionDTO {
     private Long userId;
     private List<UserAnswerDTO> userAnswers;
 
-    // Getters and Setters
+    // Constructor mặc định
+    public QuizSubmissionDTO() {
+        // Khởi tạo danh sách để tránh null
+        this.userAnswers = new ArrayList<>();
+    }
+
+    // Getters và Setters
     public Long getQuizId() {
         return quizId;
     }
@@ -37,15 +44,20 @@ public class QuizSubmissionDTO {
     }
 
     public static class UserAnswerDTO {
-        private Long questionId;
+        private long questionId;
         private int selectedAnswerIndex;
 
+        // Constructor mặc định
         public UserAnswerDTO() {}
 
-        public UserAnswerDTO(Long questionId, Integer selectedAnswerIndex) {
+        @JsonCreator
+        public UserAnswerDTO(
+                @JsonProperty("questionId") Long questionId,
+                @JsonProperty("selectedAnswerIndex") int selectedAnswerIndex) {
             this.questionId = questionId;
             this.selectedAnswerIndex = selectedAnswerIndex;
         }
+
         // Getters và setters
         public Long getQuestionId() {
             return questionId;
