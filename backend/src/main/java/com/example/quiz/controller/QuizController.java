@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.quiz.service.QuizService;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
@@ -46,6 +47,13 @@ public class QuizController {
         this.userRepository = userRepository;
     }
 
+    @GetMapping("/check")
+    public ResponseEntity<Boolean> checkQuizResult(@RequestParam Long userId, @RequestParam Long quizId) {
+        // Kiểm tra xem người dùng đã có kết quả cho quiz này chưa
+        boolean hasSubmitted = quizResultRepository.existsByUserIdAndQuizId(userId, quizId);
+        return ResponseEntity.ok(hasSubmitted);
+    }
+
     // Phương thức nộp bài
     @PostMapping("/submit")
     public ResponseEntity<String> submitQuiz(@RequestBody QuizSubmissionDTO submissionDTO) {
@@ -54,42 +62,54 @@ public class QuizController {
             Long userId = submissionDTO.getUserId();
             List<QuizSubmissionDTO.UserAnswerDTO> userAnswers = submissionDTO.getUserAnswers();
 
+            // Kiểm tra danh sách câu trả lời
+            if (userAnswers == null || userAnswers.isEmpty()) {
+                return ResponseEntity.badRequest().body("Danh sách câu trả lời không được rỗng");
+            }
+
             // Lấy quiz từ ID
             Quiz quiz = quizRepository.findById(quizId)
                     .orElseThrow(() -> new RuntimeException("Quiz không tồn tại"));
 
-            // Tính số câu đúng và điểm
+            // Lấy các câu hỏi của quiz và tạo map dễ dàng tra cứu
+            Map<Long, Question> questionMap = quiz.getQuestions().stream()
+                    .collect(Collectors.toMap(Question::getId, q -> q));
+
             int correctAnswers = 0;
             int totalQuestions = quiz.getQuestions().size();
 
-            // Kiểm tra nếu quiz không có câu hỏi
             if (totalQuestions == 0) {
                 throw new RuntimeException("Quiz không có câu hỏi");
             }
 
+            // Duyệt qua câu trả lời của người dùng
             for (QuizSubmissionDTO.UserAnswerDTO userAnswer : userAnswers) {
-                // Lấy câu hỏi từ quiz
-                Question question = quiz.getQuestions().stream()
-                        .filter(q -> q.getId().equals(userAnswer.getQuestionId()))
-                        .findFirst()
-                        .orElseThrow(() -> new RuntimeException("Câu hỏi không tồn tại"));
-
-                // Kiểm tra nếu người dùng chưa chọn đáp án (selectedAnswerIndex == -1)
-                if (userAnswer.getSelectedAnswerIndex() == -1) {
-                    // Tính điểm 0 cho câu hỏi chưa chọn đáp án hoặc bỏ qua
-                    continue; // Hoặc bạn có thể tính là sai
+                Question question = questionMap.get(userAnswer.getQuestionId());
+                if (question == null) {
+                    throw new RuntimeException("Câu hỏi với ID " + userAnswer.getQuestionId() + " không tồn tại");
                 }
 
-                // So sánh câu trả lời của người dùng với câu trả lời đúng
+                // Nếu câu hỏi chưa được trả lời, bỏ qua
+                if (userAnswer.getSelectedAnswerIndex() == -1) {
+                    continue;
+                }
+
+                // Kiểm tra câu trả lời đúng
                 if (question.getCorrectAnswerIndex() == userAnswer.getSelectedAnswerIndex()) {
                     correctAnswers++;
                 }
             }
 
             // Tính điểm
-            double score = correctAnswers * (10.0 / totalQuestions);
+            double score = (double) correctAnswers / totalQuestions * 10.0;
 
-            // Lưu kết quả vào cơ sở dữ liệu
+            // Kiểm tra xem người dùng đã làm bài này chưa
+            Optional<QuizResult> existingResult = quizResultRepository.findByQuizIdAndUserId(quizId, userId);
+            if (existingResult.isPresent()) {
+                return ResponseEntity.badRequest().body("Bạn đã nộp bài cho quiz này rồi");
+            }
+
+            // Lưu kết quả
             QuizResult result = new QuizResult();
             result.setQuiz(quiz);
             result.setUserId(userId);
@@ -97,22 +117,32 @@ public class QuizController {
             result.setTotalQuestions(totalQuestions);
             quizResultRepository.save(result);
 
-            return ResponseEntity.ok("Nộp bài thành công. Điểm của bạn là: " + score + ". Số câu đúng: " + correctAnswers + "/" + totalQuestions);
+            // Trả về thông báo điểm số
+            return ResponseEntity.ok("Nộp bài thành công. Điểm của bạn là: " + score +
+                    ". Số câu đúng: " + correctAnswers + "/" + totalQuestions);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Có lỗi xảy ra khi nộp bài: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Có lỗi xảy ra khi nộp bài: " + e.getMessage());
         }
     }
 
 
     @GetMapping("/{quizId}")
-    public ResponseEntity<QuizDTO> getQuizById(@PathVariable Long quizId, @RequestParam Long userId) {
+    public ResponseEntity<?> getQuizById(@PathVariable Long quizId, @RequestParam Long userId) {
+        // Kiểm tra xem người dùng đã nộp bài cho quiz này chưa
+        boolean hasSubmitted = quizResultRepository.existsByUserIdAndQuizId(userId, quizId);
+
+        if (hasSubmitted) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Bạn đã nộp bài cho quiz này rồi.");
+        }
+
         // Tìm quiz theo ID
         Optional<Quiz> optionalQuiz = quizService.findById(quizId);
         if (!optionalQuiz.isPresent()) {
             // Trả về lỗi nếu không tìm thấy quiz
             return ResponseEntity.notFound().build();
         }
-// Lấy quiz từ Optional
+
         Quiz quiz = optionalQuiz.get();
 
         // Chuyển quiz sang QuizDTO
@@ -126,7 +156,7 @@ public class QuizController {
         // Thêm câu hỏi vào quizDTO
         List<QuestionDTO> questionDTOs = quiz.getQuestions().stream().map(question -> {
             QuestionDTO questionDTO = new QuestionDTO();
-            questionDTO.setId(question.getId());  // Thêm dòng này để lấy id
+            questionDTO.setId(question.getId());
             questionDTO.setQuestionText(question.getQuestionText());
             questionDTO.setOptions(List.of(question.getOption1(), question.getOption2(), question.getOption3(), question.getOption4()));
             questionDTO.setCorrectAnswerIndex(question.getCorrectAnswerIndex());
@@ -263,11 +293,18 @@ public class QuizController {
             if (quizId == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Quiz ID không được để trống");
             }
+
+            // Tìm quiz theo ID
             Quiz quiz = quizRepository.findById(quizId)
                     .orElseThrow(() -> new RuntimeException("Quiz không tồn tại"));
 
-            quizRepository.delete(quiz); // Xóa quiz
-            return ResponseEntity.ok("Xóa quiz thành công");
+            // Xóa các câu hỏi liên quan trước (nếu cascade không được cấu hình)
+            questionRepository.deleteAll(quiz.getQuestions());
+
+            // Xóa quiz
+            quizRepository.delete(quiz);
+
+            return ResponseEntity.ok("Xóa quiz thành công cùng với các câu hỏi liên quan.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Có lỗi xảy ra khi xóa quiz: " + e.getMessage());
